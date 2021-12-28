@@ -1,0 +1,64 @@
+{
+  "states": [
+    {
+      "name": "STATE_START",
+      "intents": {
+        "hello_start": {
+          "patterns": [
+            "[A-z]","[0-9]"
+          ],
+          "responses": [
+            "Hello, can I help you with the subscriptions?",
+            "Hi, do you have more questions?"
+          ],
+          "actions": [
+            "set_state"
+          ],
+          "args": [
+            "STATE_QUESTION"
+          ]
+        }
+      }
+    },
+    {
+      "name": "STATE_QUESTION",
+      "intents": {
+        "subscribe_question": {
+          "patterns": [
+            "(help|i\\s|you|u\\s|we\\s|want|wanna|wnt).{0,10}\\ssubscribe",
+            "how\\s(can|do)\\si\\ssubscri",
+            "(yes|please)(\\s|$)"
+          ],
+          "responses": [
+            "You can easily subscribe by going over to www.yetanothersubscriptionservice.com",
+            "Sign up at www.yetanothersubscriptionservice.com with your email and the website will guide you on all the subscription procedures"
+          ]
+        },
+          "unsubscribe_question":{
+            "patterns":[
+              "unsubscribe",
+              "(delete|remove|stop|cancel)\\ssubscri"
+            ],
+            "responses":[
+              "Canceling your subscription is pretty straightforward. You can cancel your subscriptions from our website under account settings",
+              "Go to our website www.yetanothersubscriptionservice.com and sign in with your email and password. Next, navigate to your account settings from the little cog icon. Inside settings, go to the account settings tab on the left and then click on 'cancel subscription'"
+            ]
+          },
+          "price_question":{
+            "patterns":["(price|cost|pay|per\\smonth|monthly|annually)"],
+            "responses":["The subscription costs 900 Dollarydoos a month"]
+          },
+          "end_question":{
+            "patterns":["thank(s)?.{,10}$","thank\\syou","(that|this|okay).{1,10}(all)"],
+            "responses":["I hope I was able to help you :)","Always happy to help"],
+            "actions":["set_state"],
+            "args":["STATE_START"]
+          },
+          "default_question":{
+              "patterns":[],
+              "responses":["I'm sorry, I did not understand that","Could you explain to me what you want to know about the subscriptions?","DOES NOT COMPUTE"]
+          }
+      }
+    }
+  ]
+}
