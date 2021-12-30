@@ -9,21 +9,22 @@ The conversation flow includes the states of the chatbot and the intents. Each i
 ```json
 "name": "STATE_START",
 "intents": {
-        "hello_start": {
-          "patterns": [
-            "[A-z]","[0-9]"
-          ],
-          "responses": [
+    "hello_start": {
+        "responses": [
             "Hello, can I help you with the subscriptions?",
             "Hi, do you have more questions?"
-          ],
-          "actions": [
+        ],
+        "actions": [
             "set_state"
-          ],
-          "args": [
+        ],
+        "args": [
             "STATE_QUESTION"
-          ]
-}
+        ]
+},
+"patterns": [
+    "[A-z]",
+    "[0-9]"
+    ]
 ```
 
 ### Note
