@@ -22,8 +22,8 @@ The conversation flow includes the states of the chatbot and the intents. Each i
         ]
 },
 "patterns": [
-    "[A-z]",
-    "[0-9]"
+    "[A-z]:hello_start",
+    "[0-9]:hello_start"
     ]
 ```
 
