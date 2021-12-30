@@ -39,6 +39,7 @@ class Chatbot:
     #sets current state
     def set_state(self,state_name):
         self.state=self.states[state_name]
+        
     
     #set entity to value
     def set_entity(self,entity_name,value):
@@ -47,17 +48,46 @@ class Chatbot:
     #Takes message from user and returns a string response
     #Communicates with the current State object
     def chat(self,message):
-        message_formatted = message.lower()
-        print("User: ", message)
-        print("Regexbot: ", self.state.respond(message_formatted))
-#         return self.state.respond(message)
+        self.state.respond(message)
 
+#The base state for actions
+class Action:
+    def __init__(self, parent, action, args):
+        self.action = action
+        self.args = args
+        self.parent = parent
+
+        self.actions = {
+            "set_state": self.set_state,
+            "set_entity": self.set_entity,
+            "say": self.say,
+            "goto_intent": self.goto_intent
+        }
+    
+    #Performs the action with the args    
+    def run(self):
+        self.actions[self.action](self.args)
+         
+    def set_state(self,x):
+        self.parent.set_state(x)
+        
+    def set_entity(self,x):
+        self.parent.set_entity(x[0],x[1])
+        
+    def say(self,x):
+        self.parent.say()
+        
+    def goto_intent(self,x):
+        self.parent.goto_intent(x)
 
 #The base State object
 class State:
     def __init__(self, parent, state_dict):
         #Changes all args and actions to list
         self.state_dict = state_dict
+        
+        #Gets a list of tuples of all (pattern,intent)
+        self.patterns = self.get_patterns()
         
         #State name and name of default state formatted as "default_"+state name
         self.name = self.state_dict["name"]
@@ -68,20 +98,29 @@ class State:
         
         #houses a list of all (dict)intents in the State
         self.intents = self.get_intents()
+        
+        #A list of Action objects to be run sequentially 
+        self.action_queue = []
+        
+        #Holds current intent temporarily
+        self.current_intent = None
           
     #Matches regex and returns the first matched intent
     def find_match(self,text):
-        for intent_name in self.intents:
-            for pattern in self.state_dict["intents"][intent_name]["patterns"]:
-                p = re.compile(pattern)
-                if(p.search(text)):
-                    return intent_name
+        for pattern in self.patterns:
+            p = re.compile(pattern[0])
+            if(p.search(text)):
+                    return pattern[1]
                 
         return self.default
     
     #returns a list of all intent dicts in the state
     def get_intents(self):
         return [item for item in self.state_dict["intents"]]
+    
+    #returns a list of list
+    def get_patterns(self):
+        return  [pattern.split(":") for pattern in self.state_dict["patterns"] ]
     
     #sets state in parent to 
     def set_state(self,state_name):
@@ -96,34 +135,49 @@ class State:
         return self.state_dict["intents"][intent_name]
     
     #Runs actions
-    def respond(self,text=None,intent_name=None):
+    def respond(self,text=None, intent_name = None):
         if(text):
             intent_name = self.find_match(text)
-        response = self.get_response(intent_name)
+            print("User: ", text)
         
-        intent = self.get_intent(intent_name)
-        #Logic for handling the action and args
-        actions = {
-            "set_state": lambda x: self.set_state(x),
-            "set_entity": lambda x: self.set_entity(x[0],x[1]),
-            "say": lambda x: self.get_response(intent_name=x)
-        }
-        if "actions" in intent:
-            for index in range(len(intent["actions"])):
-                actions[intent["actions"][index]](intent["args"][index])
+        self.current_intent = intent_name    
+        self.get_actions(self.current_intent)
+        self.run_actions()
+        self.current_intent = None
         
-        return(response)
+    def goto_intent(self, intent_name):
+        self.action_queue.pop(0)
+        self.respond(intent_name=intent_name)
+    
+    #Print current response    
+    def say(self):
+        print("Regexbot: ", self.get_response())
         
     #Returns string response and cycles through responses   
-    def get_response(self,intent_name):
-        intent = self.get_intent(intent_name)
-        current_response = self.parent.intent_counts[intent_name]
+    def get_response(self):
+        current_response = self.parent.intent_counts[self.current_intent]
         
-        self.parent.intent_counts[intent_name] += 1
-        if(current_response == len(intent["responses"])):
+        self.parent.intent_counts[self.current_intent] += 1
+        if(current_response == len(self.get_intent(self.current_intent)["responses"])):
             current_response = 0
-            self.parent.intent_counts[intent_name] = 0
-    
+            self.parent.intent_counts[self.current_intent] = 0
 
-        return intent["responses"][current_response]
-        
+        return self.get_intent(self.current_intent)["responses"][current_response]
+    
+    #Loads all the actions in an intent
+    def get_actions(self,intent_name):
+        intent = self.get_intent(intent_name)
+        if "actions" in intent:
+            for index in range(len(intent["actions"])):
+                self.action_queue.append(Action(self,intent["actions"][index],intent["args"][index]))
+    
+    #Runs all actions in action_queue
+    def run_actions(self):
+        while bool(self.action_queue):
+            self.action_queue[0].run()
+            
+            #The try block prevents an out of range error if goto_intent runs a second instance of run_actions and empties the queue before the first finishes
+            try:
+                self.action_queue.pop(0)
+            except:
+                pass

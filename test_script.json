@@ -4,61 +4,79 @@
       "name": "STATE_START",
       "intents": {
         "hello_start": {
-          "patterns": [
-            "[A-z]","[0-9]"
-          ],
           "responses": [
             "Hello, can I help you with the subscriptions?",
             "Hi, do you have more questions?"
           ],
           "actions": [
+            "say",
             "set_state"
           ],
           "args": [
+            "",
             "STATE_QUESTION"
           ]
         }
-      }
+      },
+      "patterns": [
+        "[A-z]:hello_start",
+        "[0-9]:hello_start"
+      ]
     },
     {
       "name": "STATE_QUESTION",
       "intents": {
         "subscribe_question": {
-          "patterns": [
-            "(help|i\\s|you|u\\s|we\\s|want|wanna|wnt).{0,10}\\ssubscribe",
-            "how\\s(can|do)\\si\\ssubscri",
-            "(yes|please)(\\s|$)"
-          ],
           "responses": [
             "You can easily subscribe by going over to www.yetanothersubscriptionservice.com",
             "Sign up at www.yetanothersubscriptionservice.com with your email and the website will guide you on all the subscription procedures"
-          ]
+          ],
+          "actions":["say","goto_intent"],
+          "args":["","tails_question"]
         },
           "unsubscribe_question":{
-            "patterns":[
-              "unsubscribe",
-              "(delete|remove|stop|cancel)\\ssubscri"
-            ],
             "responses":[
               "Canceling your subscription is pretty straightforward. You can cancel your subscriptions from our website under account settings",
               "Go to our website www.yetanothersubscriptionservice.com and sign in with your email and password. Next, navigate to your account settings from the little cog icon. Inside settings, go to the account settings tab on the left and then click on 'cancel subscription'"
-            ]
+            ],
+            "actions":["say","goto_intent"],
+            "args":["","tails_question"]
           },
           "price_question":{
-            "patterns":["(price|cost|pay|per\\smonth|monthly|annually)"],
-            "responses":["The subscription costs 900 Dollarydoos a month"]
+            "responses":["The subscription costs 900 Dollarydoos a month"],
+            "actions":["say","goto_intent"],
+            "args":["","tails_question"]
           },
           "end_question":{
-            "patterns":["thank(s)?.{,10}$","thank\\syou","(that|this|okay).{1,10}(all)"],
             "responses":["I hope I was able to help you :)","Always happy to help"],
-            "actions":["set_state"],
-            "args":["STATE_START"]
+            "actions":["say","set_state"],
+            "args":["","STATE_START"]
+          },
+          "tails_question":{
+            "responses":[
+              "How else may I help you?",
+              "Is there anything else?",
+              "Is all clear?"
+            ],
+            "actions": ["say"],
+            "args": [""]
           },
           "default_question":{
-              "patterns":[],
-              "responses":["I'm sorry, I did not understand that","Could you explain to me what you want to know about the subscriptions?","DOES NOT COMPUTE"]
+              "responses":["I'm sorry, I did not understand that","Could you explain to me what you want to know about the subscriptions?","DOES NOT COMPUTE"],
+              "actions":["say"],
+              "args":[""]
           }
-      }
+      },
+      "patterns": [
+        "(help|i\\s|you|u\\s|we\\s|want|wanna|wnt).{0,10}\\ssubscribe:subscribe_question",
+        "how\\s(can|do)\\si\\ssubscri:subscribe_question",
+        "(yes|please)(\\s|$):subscribe_question",
+        "unsubscribe:unsubscribe_question",
+        "(delete|remove|stop|cancel)\\ssubscri:unsubscribe_question",
+        "(price|cost|pay|per\\smonth|monthly|annually):price_question",
+        "thank(s)?.{,10}$:end_question",
+        "thank\\syou:end_question",
+        "(that|this|okay).{1,10}(all):end_question"]
     }
   ]
 }

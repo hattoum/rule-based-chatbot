@@ -12,5 +12,4 @@ conversation = ["Hello",
 
 for message in conversation:
     chatbot.chat(message)
-    
 
